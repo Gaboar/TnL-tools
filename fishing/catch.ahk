@@ -1,4 +1,4 @@
-; Fishing quick time event script for Thtone and Liberty
+; Fishing quick time event script for Throne and Liberty
 ; https://github.com/Gaboar
 ; Version 1.0
 ;
