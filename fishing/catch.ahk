@@ -1,6 +1,6 @@
-; Fishing quick time event script for Throne and Liberty
+; Fishing quick time event script for Thtone and Liberty
 ; https://github.com/Gaboar
-; Version 1.0
+; Version 1.1
 ;
 ; Requires Autohotkey https://autohotkey.com/
 ;
@@ -23,6 +23,9 @@ fishHpBarYBot := 721
 fishHpColor := 0x925a2b
 
 isFishing := false
+
+Suspend()
+TimedToolTip('Fishing script loaded`nPress F8 to enable/disable', 1600)
 
 f:: {
 	global
@@ -52,10 +55,20 @@ q:: {
 	TimedToolTip('Stopped looking', 800)
 }
 
+#SuspendExempt
+F8:: {
+	Suspend()
+	if (A_IsSuspended) {
+		TimedToolTip('Fishing script disabled', 1000)
+	} else {
+		TimedToolTip('Fishing script enabled', 1000)
+	}
+}
+#SuspendExempt False
+
 ;; Fishing Actions, not triggered by key press, only used internally
 checkForFish() {
 	global
-	currentAction := 'Waiting for fish'
 	local pX := 0
 	local pY := 0
 	while (isFishing) {
@@ -68,7 +81,6 @@ checkForFish() {
 			Send('{q up}')
 			Suspend(0)
 			isFishing := false
-			currentAction := 'Stopping Fishing'
 			TimedToolTip('Catch!', 800)
 		} else {
 			sleep(15)
