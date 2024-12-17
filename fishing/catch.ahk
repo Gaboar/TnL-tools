@@ -1,6 +1,6 @@
 ; Fishing quick time event script for Thtone and Liberty
 ; https://github.com/Gaboar
-; Version 1.1
+; Version 2.0
 ;
 ; Requires Autohotkey https://autohotkey.com/
 ;
@@ -22,25 +22,37 @@ fishHpBarYTop := 620
 fishHpBarYBot := 721
 fishHpColor := 0x925a2b
 
+fishingRodX := 816
+fishingRodY := 955
+
+fishButtonX := 1190
+fishButtonY := 630
+fishButtonColor := 0x332b37
+
 isFishing := false
+fastReset := false
 
 Suspend()
-TimedToolTip('Fishing script loaded`nPress F8 to enable/disable', 1600)
+TimedToolTip('Fishing script loaded', 1600)
 
+
+;; Keys
 f:: {
+	Cast()
+}
+
+Cast() {
 	global
-	Suspend(1)
 	Send('{f down}')
 	Sleep(150)
 	Send('{f up}')
-	Suspend(0)
 	if (isFishing) {
 		isFishing := false
 		TimedToolTip('Stopped looking', 800)
 	} else {
 		isFishing := true
 		TimedToolTip('Looking for fish', 800)
-		checkForFish()
+		CheckForFish()
 	}
 }
 
@@ -50,24 +62,42 @@ q:: {
 	Send('{q down}')
 	Sleep(150)
 	Send('{q up}')
-	Suspend(0)
 	isFishing := false
-	TimedToolTip('Stopped looking', 800)
+	TimedToolTip('Fishing script disabled', 1000)
 }
 
-#SuspendExempt
-F8:: {
+#SuspendExempt true
+^f:: {
+	global
+	Send('{ctrl down}')
+	Send('{f down}')
+	Sleep(150)
+	Send('{f up}')
+	Send('{ctrl up}')
 	Suspend()
+	isFishing := false
 	if (A_IsSuspended) {
 		TimedToolTip('Fishing script disabled', 1000)
 	} else {
 		TimedToolTip('Fishing script enabled', 1000)
 	}
 }
-#SuspendExempt False
+#SuspendExempt false
+
+f6:: {
+	global
+	if (fastReset) {
+		fastReset := false
+		TimedToolTip('Fast reset disabled', 1000)
+	} else {
+		fastReset := true
+		TimedToolTip('Fast reset enabled', 1000)
+	}
+}
+
 
 ;; Fishing Actions, not triggered by key press, only used internally
-checkForFish() {
+CheckForFish() {
 	global
 	local pX := 0
 	local pY := 0
@@ -82,10 +112,44 @@ checkForFish() {
 			Suspend(0)
 			isFishing := false
 			TimedToolTip('Catch!', 800)
+			if (fastReset) {
+				WaitForEnd()
+				Reset()
+			}
 		} else {
 			sleep(15)
 		}
 	}
+}
+
+WaitForEnd() {
+	global
+	Sleep(2000)
+	local pX := 0
+	local pY := 0
+	local success := true
+	while (success) {
+		local success := PixelSearch(&pX, &pY, fishButtonX, fishButtonY, fishButtonX, fishButtonY, fishButtonColor, 20)
+		Sleep(50)
+	}
+	TimedToolTip('Reset', 800)
+}
+
+Reset() {
+	global
+	Send('{alt down}')
+	Sleep(150)
+	Send('{alt up}')
+	Sleep(30)
+	MouseClick('L', fishingRodX, fishingRodY, 1, 0)
+	Sleep(30)
+	MouseClick('L', fishingRodX, fishingRodY, 1, 0)
+	Sleep(30)
+	Send('{alt down}')
+	Sleep(150)
+	Send('{alt up}')
+	Sleep(800)
+	Cast()
 }
 
 ;; Some Utils
