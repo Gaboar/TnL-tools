@@ -1,6 +1,6 @@
 ; Fishing quick time event script for Thtone and Liberty
 ; https://github.com/Gaboar
-; Version 2.0
+; Version 2.1
 ;
 ; Requires Autohotkey https://autohotkey.com/
 ;
@@ -66,6 +66,22 @@ q:: {
 	TimedToolTip('Fishing script disabled', 1000)
 }
 
+s:: {
+	global
+	if (isFishing) {
+		TimedToolTip('Recast float', 800)
+		Suspend(1)
+		Send('{f down}')
+		Sleep(150)
+		Send('{f up}')
+		Sleep(200)
+		Send('{f down}')
+		Sleep(150)
+		Send('{f up}')
+		Suspend(0)
+	}
+}
+
 #SuspendExempt true
 ^f:: {
 	global
@@ -105,13 +121,13 @@ CheckForFish() {
 		local success := PixelSearch(&pX, &pY, fishHpBarX, fishHpBarYTop, fishHpBarX, fishHpBarYBot, fishHpColor, 20)
 		if (success) {
 			Sleep(150)
+			TimedToolTip('Catch!', 800)
 			Suspend(1)
 			Send('{q down}')
 			Sleep(150)
 			Send('{q up}')
 			Suspend(0)
 			isFishing := false
-			TimedToolTip('Catch!', 800)
 			if (fastReset) {
 				WaitForEnd()
 				Reset()
@@ -132,19 +148,22 @@ WaitForEnd() {
 		local success := PixelSearch(&pX, &pY, fishButtonX, fishButtonY, fishButtonX, fishButtonY, fishButtonColor, 20)
 		Sleep(50)
 	}
-	TimedToolTip('Reset', 800)
 }
 
 Reset() {
 	global
+	TimedToolTip('Reset', 800)
+	Send('{a up}')
+	Send('{d up}')
+	Sleep(10)
 	Send('{alt down}')
 	Sleep(150)
 	Send('{alt up}')
-	Sleep(30)
+	Sleep(100)
 	MouseClick('L', fishingRodX, fishingRodY, 1, 0)
-	Sleep(30)
+	Sleep(40)
 	MouseClick('L', fishingRodX, fishingRodY, 1, 0)
-	Sleep(30)
+	Sleep(100)
 	Send('{alt down}')
 	Sleep(150)
 	Send('{alt up}')
