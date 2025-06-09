@@ -1,6 +1,6 @@
 ; Fishing quick time event script for Thtone and Liberty
 ; https://github.com/Gaboar
-; Version 2.1
+; Version 3.0
 ;
 ; Requires Autohotkey https://autohotkey.com/
 ;
@@ -18,19 +18,23 @@ SendMode('Event')
 CoordMode('Mouse', 'Screen')
 
 fishHpBarX := 1116
-fishHpBarYTop := 620
-fishHpBarYBot := 721
+fishHpBarYTop := 600
+fishHpBarYBot := 720
 fishHpColor := 0x925a2b
+fishHpIndicatorColor := 0xfbf6d4
 
-fishingRodX := 816
-fishingRodY := 955
+staminaBarX := 1137
+staminaBarY := 595
+staminaColor := 0x56391b
+staminaTopColor := 0xa5c57a
 
 fishButtonX := 1190
 fishButtonY := 630
 fishButtonColor := 0x332b37
 
 isFishing := false
-fastReset := false
+fastReset := true ;false
+autoPull := false
 
 Suspend()
 TimedToolTip('Fishing script loaded', 1600)
@@ -111,6 +115,17 @@ f6:: {
 	}
 }
 
+f7:: {
+	global
+	if (autoPull) {
+		autoPull := false
+		TimedToolTip('Autopull disabled', 1000)
+	} else {
+		autoPull := true
+		TimedToolTip('Autopull enabled', 1000)
+	}
+}
+
 
 ;; Fishing Actions, not triggered by key press, only used internally
 CheckForFish() {
@@ -127,10 +142,16 @@ CheckForFish() {
 			Sleep(150)
 			Send('{q up}')
 			Suspend(0)
-			isFishing := false
 			if (fastReset) {
-				WaitForEnd()
+				if (autoPull) {
+					PullFish()
+				} else {
+					WaitForEnd()
+				}
 				Reset()
+			}
+			else {
+				isFishing := false
 			}
 		} else {
 			sleep(15)
@@ -150,24 +171,88 @@ WaitForEnd() {
 	}
 }
 
+;; Only works for low level fishes
+PullFish() {
+	global
+	Sleep(100)
+	local pX := 0
+	local pY := 0
+	local fishHp := fishHpBarYTop
+	local pullLeft := true
+	local pullingLeft := true
+	local waiting := false
+	Send('{a down}')
+	local success := true
+	while (success) {
+		local success := PixelSearch(&pX, &pY, fishButtonX, fishButtonY, fishButtonX, fishButtonY, fishButtonColor, 20)
+		if (waiting) {
+			local s2 := PixelSearch(&pX, &pY, staminaBarX, staminaBarY, staminaBarX, staminaBarY+20, staminaTopColor, 50)
+			if (s2) {
+				waiting := false
+			}
+		} else {
+			ToolTip(Round((1-(fishHp-fishHpBarYTop)/(fishHpBarYBot-fishHpBarYTop))*100) '%')
+			local s3 := PixelSearch(&pX, &pY, fishHpBarX, fishHpBarYTop, fishHpBarX, fishHpBarYBot, fishHpIndicatorColor, 50)
+			if (s3) {
+				if (fishHp < pY) {
+					fishHp := pY
+				} else {
+					pullLeft := !pullLeft
+				}
+			}
+			if (pullLeft != pullingLeft) {
+				if (pullLeft) {
+					Send('{d up}')
+					Sleep(10)
+					Send('{a down}')
+				} else {
+					Send('{a up}')
+					Sleep(10)
+					Send('{d down}')
+				}
+				pullingLeft := pullLeft
+			}
+			local s1 := PixelSearch(&pX, &pY, staminaBarX, fishHp, staminaBarX, fishHp, staminaColor, 20)
+			if (s1) {
+				waiting := true
+				if (pullingLeft) {
+					Send('{a up}')
+				} else {
+					Send('{d up}')
+				}
+				ToolTip('Recharge')
+			}
+		}
+		Sleep(150)
+	}
+	if (pullingLeft) {
+		Send('{a up}')
+	} else {
+		Send('{d up}')
+	}
+}
+
+;; Skips animation
 Reset() {
 	global
+	if (not isFishing) {
+		return
+	}
+	isFishing := false
 	TimedToolTip('Reset', 800)
-	Send('{a up}')
-	Send('{d up}')
-	Sleep(10)
-	Send('{alt down}')
-	Sleep(150)
-	Send('{alt up}')
+	Sleep(50)
+	Suspend(1)
+	Send('{ctrl down}')
 	Sleep(100)
-	MouseClick('L', fishingRodX, fishingRodY, 1, 0)
-	Sleep(40)
-	MouseClick('L', fishingRodX, fishingRodY, 1, 0)
+	Send('{f down}')
+	Send('{f up}')
+	Sleep(120)
+	Send('{f down}')
+	Send('{f up}')
 	Sleep(100)
-	Send('{alt down}')
-	Sleep(150)
-	Send('{alt up}')
-	Sleep(800)
+	Send('{ctrl up}')
+	Suspend(0)
+	Sleep(100)
 	Cast()
 }
 
